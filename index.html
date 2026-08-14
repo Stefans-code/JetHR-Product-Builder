@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calcolatore RAL → Netto — Jet HR prototipo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --paper:#F7F5F0;
+    --ink:#161B22;
+    --navy:#1B2A4A;
+    --ledger:#3B6E5C;
+    --tax:#9A4B2E;
+    --line:#D8D2C4;
+    --muted:#6B6558;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:48px 20px 80px;
+    min-height:100vh;
+  }
+
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header{margin-bottom:40px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ledger);
+    margin-bottom:10px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(30px,5vw,42px);
+    line-height:1.08;
+    margin:0 0 12px;
+    color:var(--navy);
+  }
+  .sub{
+    font-size:15px;
+    color:var(--muted);
+    line-height:1.55;
+    max-width:56ch;
+  }
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:2px;
+    position:relative;
+  }
+
+  /* perforated ticket edge */
+  .perf{
+    height:16px;
+    background-image: radial-gradient(circle at 10px 0, var(--paper) 6px, transparent 7px);
+    background-size: 20px 16px;
+    background-repeat: repeat-x;
+    margin-top:-1px;
+  }
+
+  .input-row{
+    padding:32px 32px 28px;
+    border-bottom:1px dashed var(--line);
+  }
+  label{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  .field{
+    display:flex;
+    align-items:stretch;
+    gap:12px;
+  }
+  .field-input{
+    flex:1;
+    display:flex;
+    align-items:center;
+    border:1px solid var(--ink);
+    padding:0 16px;
+  }
+  .field-input span{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--muted);
+    margin-right:6px;
+  }
+  input[type=number]{
+    border:none;
+    outline:none;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:22px;
+    padding:14px 0;
+    width:100%;
+    background:transparent;
+    color:var(--ink);
+  }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+
+  button#calcola{
+    background:var(--navy);
+    color:#fff;
+    border:none;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    letter-spacing:.04em;
+    padding:0 26px;
+    cursor:pointer;
+    transition:background .15s ease;
+    white-space:nowrap;
+  }
+  button#calcola:hover{background:#0f1a30;}
+  button#calcola:focus-visible{outline:2px solid var(--ledger);outline-offset:2px;}
+
+  .result-hero{
+    padding:28px 32px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+    background:#FCFBF8;
+    border-bottom:1px dashed var(--line);
+  }
+  .result-hero .stat .k{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .result-hero .stat .v{
+    font-family:'Fraunces',serif;
+    font-size:clamp(26px,4vw,34px);
+    color:var(--ledger);
+    font-variant-numeric:tabular-nums;
+  }
+  .result-hero .stat .v.mensile{color:var(--navy);}
+
+  .breakdown{padding:24px 32px 8px;}
+  .breakdown h2{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 14px;
+  }
+  .line{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+    font-size:14.5px;
+  }
+  .line:last-child{border-bottom:none;}
+  .line .label{color:var(--ink);}
+  .line .label small{display:block;color:var(--muted);font-size:12px;margin-top:2px;}
+  .line .amt{
+    font-family:'IBM Plex Mono',monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  .line.deduzione .amt{color:var(--tax);}
+  .line.totale{
+    border-top:2px solid var(--ink);
+    border-bottom:none;
+    font-weight:600;
+    padding-top:14px;
+    margin-top:4px;
+  }
+  .line.totale .amt{color:var(--ledger);font-size:16px;}
+
+  .rate-tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--muted);
+    background:var(--paper);
+    border:1px solid var(--line);
+    padding:2px 8px;
+    border-radius:20px;
+    margin-left:8px;
+  }
+
+  .assumptions{
+    padding:20px 32px 30px;
+    font-size:12.5px;
+    line-height:1.7;
+    color:var(--muted);
+  }
+  .assumptions h3{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--navy);
+    margin:0 0 10px;
+  }
+  .assumptions ul{margin:0;padding-left:18px;}
+  .assumptions li{margin-bottom:4px;}
+
+  .placeholder{
+    padding:60px 32px;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  footer{
+    max-width:760px;
+    margin:28px auto 0;
+    font-size:12px;
+    color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  @media (max-width:520px){
+    .field{flex-direction:column;}
+    button#calcola{padding:14px;}
+    .result-hero{grid-template-columns:1fr;}
+    .input-row,.breakdown,.assumptions{padding-left:20px;padding-right:20px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Jet HR · prototipo cost-saving</div>
+    <h1>Dal lordo al netto,<br>voce per voce.</h1>
+    <p class="sub">Inserisci la RAL di un dipendente a tempo indeterminato, residente a Milano, senza agevolazioni particolari. Il calcolatore mostra ogni trattenuta applicata prima di arrivare al netto.</p>
+  </header>
+
+  <div class="card">
+    <div class="input-row">
+      <label for="ral">Retribuzione annua lorda (RAL)</label>
+      <div class="field">
+        <div class="field-input">
+          <span>€</span>
+          <input type="number" id="ral" placeholder="30.000" min="0" step="100">
+        </div>
+        <button id="calcola">Calcola →</button>
+      </div>
+    </div>
+
+    <div id="output">
+      <div class="placeholder">Inserisci una RAL per vedere la proiezione del netto.</div>
+    </div>
+  </div>
+
+  <footer>Stima semplificata · dipendente tempo indeterminato · residenza fiscale Milano (MI) · nessuna agevolazione o familiare a carico · anno d'imposta 2026</footer>
+</div>
+
+<script>
+const RATES = {
+  inps: 0.0919,
+  comunaleMilano: 0.008,
+  comunaleSogliaEsenzione: 23000,
+};
+
+function irpefLorda(rc){
+  if (rc <= 28000) return rc * 0.23;
+  if (rc <= 50000) return 28000*0.23 + (rc-28000)*0.33;
+  return 28000*0.23 + 22000*0.33 + (rc-50000)*0.43;
+}
+
+function detrazioneLavoroDipendente(rc){
+  let d;
+  if (rc <= 15000) d = 1955;
+  else if (rc <= 28000) d = 1910 + 1190 * (28000 - rc) / 13000;
+  else if (rc <= 50000) d = 1910 * (50000 - rc) / 22000;
+  else d = 0;
+  if (rc >= 25000 && rc <= 35000) d += 65; // ulteriore detrazione L. Bilancio 2026
+  return Math.max(0, d);
+}
+
+function addizionaleRegionaleLombardia(rc){
+  if (rc <= 15000) return rc * 0.0123;
+  if (rc <= 28000) return 15000*0.0123 + (rc-15000)*0.0158;
+  if (rc <= 50000) return 15000*0.0123 + 13000*0.0158 + (rc-28000)*0.0172;
+  return 15000*0.0123 + 13000*0.0158 + 22000*0.0172 + (rc-50000)*0.0173;
+}
+
+function addizionaleComunaleMilano(rc){
+  return rc > RATES.comunaleSogliaEsenzione ? rc * RATES.comunaleMilano : 0;
+}
+
+function calcola(ral){
+  const inps = ral * RATES.inps;
+  const imponibileFiscale = Math.max(0, ral - inps);
+
+  const lorda = irpefLorda(imponibileFiscale);
+  const detrazione = detrazioneLavoroDipendente(imponibileFiscale);
+  const irpefNetta = Math.max(0, lorda - detrazione);
+
+  const addRegionale = addizionaleRegionaleLombardia(imponibileFiscale);
+  const addComunale = addizionaleComunaleMilano(imponibileFiscale);
+
+  const totaleTrattenute = inps + irpefNetta + addRegionale + addComunale;
+  const nettoAnnuo = ral - totaleTrattenute;
+  const nettoMensile = nettoAnnuo / 12;
+
+  return {
+    ral, inps, imponibileFiscale, lorda, detrazione, irpefNetta,
+    addRegionale, addComunale, totaleTrattenute, nettoAnnuo, nettoMensile
+  };
+}
+
+function euro(n){
+  return n.toLocaleString('it-IT', {style:'currency', currency:'EUR', maximumFractionDigits:0});
+}
+
+function render(r){
+  const out = document.getElementById('output');
+  out.innerHTML = `
+    <div class="result-hero">
+      <div class="stat">
+        <div class="k">Netto annuo</div>
+        <div class="v">${euro(r.nettoAnnuo)}</div>
+      </div>
+      <div class="stat">
+        <div class="k">Netto mensile <span style="font-weight:400">(12 mensilità)</span></div>
+        <div class="v mensile">${euro(r.nettoMensile)}</div>
+      </div>
+    </div>
+
+    <div class="breakdown">
+      <h2>Voci trattenute al lordo</h2>
+
+      <div class="line">
+        <div class="label">RAL — retribuzione lorda annua</div>
+        <div class="amt">${euro(r.ral)}</div>
+      </div>
+
+      <div class="line deduzione">
+        <div class="label">Contributi INPS a carico lavoratore <span class="rate-tag">9,19%</span>
+          <small>Quota IVS trattenuta in busta, versata alla previdenza</small>
+        </div>
+        <div class="amt">− ${euro(r.inps)}</div>
+      </div>
+
+      <div class="line">
+        <div class="label">Imponibile fiscale <small>RAL − contributi INPS</small></div>
+        <div class="amt">${euro(r.imponibileFiscale)}</div>
+      </div>
+
+      <div class="line deduzione">
+        <div class="label">IRPEF lorda <small>Scaglioni 23% / 33% / 43% — art. 11 TUIR</small></div>
+        <div class="amt">− ${euro(r.lorda)}</div>
+      </div>
+
+      <div class="line">
+        <div class="label">Detrazione lavoro dipendente <small>art. 13 TUIR, decrescente col reddito</small></div>
+        <div class="amt">+ ${euro(r.detrazione)}</div>
+      </div>
+
+      <div class="line deduzione">
+        <div class="label">IRPEF netta <small>IRPEF lorda − detrazione (min. 0)</small></div>
+        <div class="amt">− ${euro(r.irpefNetta)}</div>
+      </div>
+
+      <div class="line deduzione">
+        <div class="label">Addizionale regionale <small>Lombardia, a scaglioni 1,23%–1,73%</small></div>
+        <div class="amt">− ${euro(r.addRegionale)}</div>
+      </div>
+
+      <div class="line deduzione">
+        <div class="label">Addizionale comunale <small>Milano, 0,8% oltre € 23.000 di imponibile</small></div>
+        <div class="amt">− ${euro(r.addComunale)}</div>
+      </div>
+
+      <div class="line totale">
+        <div class="label">Totale trattenute</div>
+        <div class="amt">${euro(r.totaleTrattenute)}</div>
+      </div>
+    </div>
+
+    <div class="assumptions">
+      <h3>Semplificazioni applicate</h3>
+      <ul>
+        <li>Dipendente privato a tempo indeterminato, 12 mensilità, nessun arretrato o conguaglio.</li>
+        <li>Nessun familiare a carico, nessuna spesa detraibile, nessun bonus/agevolazione (es. ZES, impatriati).</li>
+        <li>Contributi INPS calcolati al 9,19% sull'intera RAL, senza applicare il massimale contributivo né l'aliquota aggiuntiva dell'1% oltre € 56.224 (categoria rara per un ruolo junior/mid).</li>
+        <li>Non è simulato il trattamento integrativo ("bonus Renzi") per i redditi più bassi, né la soglia di incapienza sotto € 8.500.</li>
+        <li>Addizionale comunale di Milano trattata come aliquota unica 0,8% con esenzione piena sotto € 23.000, per assenza di delibera 2026 aggiornata (valore 2025 riportato come fallback).</li>
+        <li>TFR non incluso: è una voce di retribuzione differita, non parte dello stipendio netto mensile/annuale percepito.</li>
+      </ul>
+    </div>
+  `;
+}
+
+document.getElementById('calcola').addEventListener('click', () => {
+  const val = parseFloat(document.getElementById('ral').value);
+  if (!val || val <= 0){
+    document.getElementById('output').innerHTML = '<div class="placeholder">Inserisci una RAL valida (numero maggiore di zero).</div>';
+    return;
+  }
+  render(calcola(val));
+});
+
+document.getElementById('ral').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('calcola').click();
+});
+</script>
+</body>
+</html>
