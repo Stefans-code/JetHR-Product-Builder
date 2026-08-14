@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calcolatore RAL → Netto — Jet HR prototipo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Jet HR · prototipo cost-saving</div>
+    <h1>Dal lordo al netto,<br>voce per voce.</h1>
+    <p class="sub">Inserisci la RAL di un dipendente a tempo indeterminato, residente a Milano, senza agevolazioni particolari. Il calcolatore mostra ogni trattenuta applicata prima di arrivare al netto.</p>
+  </header>
+
+  <div class="card">
+    <div class="input-row">
+      <label for="ral">Retribuzione annua lorda (RAL)</label>
+      <div class="field">
+        <div class="field-input">
+          <span>€</span>
+          <input type="text" inputmode="numeric" id="ral" placeholder="30.000" autocomplete="off">
+        </div>
+        <button id="calcola">Calcola →</button>
+      </div>
+    </div>
+
+    <div id="output">
+      <div class="placeholder">Inserisci una RAL per vedere la proiezione del netto.</div>
+    </div>
+  </div>
+
+  <footer>Stima semplificata · dipendente tempo indeterminato · residenza fiscale Milano (MI) · nessuna agevolazione o familiare a carico · anno d'imposta 2026</footer>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
