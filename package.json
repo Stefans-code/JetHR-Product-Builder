@@ -1,0 +1,10 @@
+{
+  "name": "jethr-ral-netto",
+  "version": "1.0.0",
+  "description": "Calcolatore RAL -> netto, anno d'imposta 2026. Prototipo per la task Product Builder @ Jet HR.",
+  "private": true,
+  "scripts": {
+    "test": "node test/calcolo.test.js"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verifiche del motore di calcolo</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .verifica { display: flex; gap: 11px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .verifica:last-child { border-bottom: 0; }
+  .bollino { flex: none; margin-top: 1px; font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 2px 7px; border-radius: 4px; }
+  .ok  { background: #e3f4ec; color: #0a6b48; }
+  .ko  { background: #fbe6e4; color: #92251c; }
+  /* Le varianti scure vanno sotto la media query: senza, il selettore
+     :not([data-theme="light"]) matcha anche il tema chiaro di default
+     e i bollini diventano verde scuro su fondo chiaro. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .ok { background: #12321f; color: #6fd2a4; }
+    :root:not([data-theme="light"]) .ko { background: #3a1815; color: #f2a49c; }
+  }
+  :root[data-theme="dark"] .ok { background: #12321f; color: #6fd2a4; }
+  :root[data-theme="dark"] .ko { background: #3a1815; color: #f2a49c; }
+  .motivo { display: block; font-family: var(--mono); font-size: 12px; color: var(--text-3); margin-top: 3px; }
+  .verdetto { font-size: 19px; font-weight: 650; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="pagina">
+
+  <header class="testata">
+    <div class="occhiello">Prototipo &middot; task Product Builder</div>
+    <h1>Verifiche del motore di calcolo</h1>
+    <p class="sommario">
+      Le stesse asserzioni eseguite da <code>node test/calcolo.test.js</code>, eseguite qui nel browser.
+      Fissano per iscritto le soglie di legge, la continuit&agrave; degli scaglioni e le identit&agrave;
+      contabili, cos&igrave; che una modifica alle aliquote non possa rompere il calcolo in silenzio.
+    </p>
+    <div class="etichette"><span class="etichetta"><a href="index.html">&larr; torna al calcolatore</a></span></div>
+  </header>
+
+  <section class="card">
+    <div class="primario">
+      <span class="etichetta-cifra">Esito</span>
+      <span class="cifra" id="verdetto">&mdash;</span>
+    </div>
+    <div id="elenco"></div>
+  </section>
+
+  <section class="card">
+    <h2>Casi di riferimento &mdash; 13 mensilit&agrave;, Milano, anno d'imposta 2026</h2>
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">RAL</th>
+          <th scope="col" class="num">Netto annuo</th>
+          <th scope="col" class="num">Mese ordinario</th>
+          <th scope="col" class="num">Tredicesima</th>
+          <th scope="col" class="num">Aliquota effettiva</th>
+        </tr>
+      </thead>
+      <tbody id="riferimenti"></tbody>
+    </table>
+  </section>
+
+</div>
+
+<script src="src/tax-rules-2026.js"></script>
+<script src="src/calcolo.js"></script>
+<script src="test/calcolo.test.js"></script>
+<script>
+(function () {
+  var esito = window.SuiteTest.esegui();
+  var elenco = document.getElementById('elenco');
+
+  esito.risultati.forEach(function (r) {
+    var riga = document.createElement('div');
+    riga.className = 'verifica';
+
+    var bollino = document.createElement('span');
+    bollino.className = 'bollino ' + (r.ok ? 'ok' : 'ko');
+    bollino.textContent = r.ok ? 'PASS' : 'FAIL';
+
+    var corpo = document.createElement('div');
+    corpo.textContent = r.nome;
+    if (!r.ok) {
+      var motivo = document.createElement('span');
+      motivo.className = 'motivo';
+      motivo.textContent = r.errore;
+      corpo.appendChild(motivo);
+    }
+
+    riga.appendChild(bollino);
+    riga.appendChild(corpo);
+    elenco.appendChild(riga);
+  });
+
+  var verdetto = document.getElementById('verdetto');
+  verdetto.textContent = (esito.totali - esito.falliti) + ' / ' + esito.totali + ' superate';
+  verdetto.style.color = esito.falliti === 0 ? 'var(--serie-3)' : '#b3261e';
+
+  // useGrouping esplicito: il default "min2" di it-IT non separa le migliaia sotto i 10.000.
+  var eur = new Intl.NumberFormat('it-IT', {
+    style: 'currency', currency: 'EUR', useGrouping: true, maximumFractionDigits: 0
+  });
+  var corpo = document.getElementById('riferimenti');
+
+  window.SuiteTest.casiRiferimento().forEach(function (c) {
+    var tr = document.createElement('tr');
+    [
+      eur.format(c.ral),
+      eur.format(c.nettoAnnuo),
+      eur.format(c.nettoOrdinario),
+      eur.format(c.tredicesima),
+      (c.aliquotaEffettiva * 100).toFixed(1).replace('.', ',') + '%'
+    ].forEach(function (valore, i) {
+      var td = document.createElement('td');
+      if (i > 0) { td.className = 'num'; }
+      td.textContent = valore;
+      tr.appendChild(td);
+    });
+    corpo.appendChild(tr);
+  });
+})();
+</script>
+</body>
+</html>

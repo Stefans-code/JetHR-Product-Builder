@@ -1,39 +1,210 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calcolatore RAL → Netto — Jet HR prototipo</title>
-<link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dalla RAL al netto — calcolatore 2026</title>
+<meta name="description" content="Prototipo che stima il netto annuale e mensile a partire dalla RAL, mostrando ogni voce trattenuta al lordo. Anno d'imposta 2026, dipendente a tempo indeterminato residente a Milano.">
+<link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="eyebrow">Jet HR · prototipo cost-saving</div>
-    <h1>Dal lordo al netto,<br>voce per voce.</h1>
-    <p class="sub">Inserisci la RAL di un dipendente a tempo indeterminato, residente a Milano, senza agevolazioni particolari. Il calcolatore mostra ogni trattenuta applicata prima di arrivare al netto.</p>
+
+<div class="pagina">
+
+  <header class="testata">
+    <div class="occhiello">Prototipo &middot; task Product Builder</div>
+    <h1>Dalla RAL al netto, voce per voce.</h1>
+    <p class="sommario">
+      Inserisci una retribuzione annua lorda: il calcolatore mostra il netto annuale e mensile
+      e ogni singola trattenuta applicata al lordo, con la formula di legge effettivamente usata.
+    </p>
+    <div class="etichette">
+      <span class="etichetta">Anno d'imposta 2026</span>
+      <span class="etichetta">Dipendente privato, tempo indeterminato</span>
+      <span class="etichetta">Residenza fiscale Milano</span>
+      <span class="etichetta">Nessuna agevolazione</span>
+    </div>
   </header>
 
-  <div class="card">
-    <div class="input-row">
-      <label for="ral">Retribuzione annua lorda (RAL)</label>
-      <div class="field">
-        <div class="field-input">
-          <span>€</span>
-          <input type="text" inputmode="numeric" id="ral" placeholder="30.000" autocomplete="off">
+  <!-- ===================== INPUT ===================== -->
+  <!-- autocomplete="off" disattiva il ripristino automatico dello stato dei
+       controlli: senza, riaprendo un link condiviso in una scheda gia usata il
+       browser rimette le mensilita scelte prima, sovrascrivendo il parametro URL. -->
+  <form class="card" id="modulo" novalidate autocomplete="off">
+    <div class="campi">
+      <div>
+        <label for="ral">Retribuzione annua lorda</label>
+        <div class="valuta">
+          <span class="simbolo" aria-hidden="true">&euro;</span>
+          <input type="text" id="ral" inputmode="numeric" autocomplete="off"
+                 placeholder="35.000" aria-describedby="errore">
         </div>
-        <button id="calcola">Calcola →</button>
+      </div>
+
+      <div>
+        <span class="pseudo-label" id="etichetta-mensilita">Mensilit&agrave;</span>
+        <div class="segmenti" role="group" aria-labelledby="etichetta-mensilita">
+          <input type="radio" name="mensilita" id="m12" value="12"><label for="m12">12</label>
+          <input type="radio" name="mensilita" id="m13" value="13" checked><label for="m13">13</label>
+          <input type="radio" name="mensilita" id="m14" value="14"><label for="m14">14</label>
+        </div>
       </div>
     </div>
 
-    <div id="output">
-      <div class="placeholder">Inserisci una RAL per vedere la proiezione del netto.</div>
+    <div class="azioni">
+      <button type="submit" class="principale">Calcola</button>
+      <button type="button" class="secondario" id="btn-formule" aria-pressed="false">Mostra le formule</button>
     </div>
+
+    <p class="errore" id="errore" role="alert"></p>
+  </form>
+
+  <!-- ===================== RISULTATI ===================== -->
+  <div class="esito" id="esito" hidden>
+
+    <div id="avvisi"></div>
+
+    <section class="card" aria-labelledby="t-sintesi">
+      <h2 id="t-sintesi">Sintesi</h2>
+      <div class="primario">
+        <span class="etichetta-cifra">Netto annuo</span>
+        <span class="cifra" id="netto-annuo">&mdash;</span>
+        <span class="contorno" id="netto-contorno"></span>
+      </div>
+      <div class="tessere" id="tessere"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t-composizione">
+      <h2 id="t-composizione">Composizione della RAL</h2>
+      <div id="grafico"></div>
+      <div class="legenda" id="legenda"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t-dettaglio">
+      <div class="intestazione-sezione">
+        <h2 id="t-dettaglio">Dal lordo al netto, passo per passo</h2>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Voce</th>
+            <th scope="col" class="num">Importo annuo</th>
+          </tr>
+        </thead>
+        <tbody id="dettaglio" class="compatta"></tbody>
+      </table>
+    </section>
+
+    <section class="card" aria-labelledby="t-costo">
+      <h2 id="t-costo">Costo per l'azienda &mdash; stima indicativa</h2>
+      <div class="tessere" id="costo-azienda"></div>
+      <p style="font-size:13px;color:var(--text-3);margin:14px 0 0">
+        Questa sezione non entra nel calcolo del netto. I contributi a carico del datore variano
+        per CCNL, settore, dimensione aziendale e tariffa INAIL: qui &egrave; usata una stima
+        del 30% della RAL, pi&ugrave; il TFR accantonato (RAL / 13,5, art. 2120 c.c.).
+      </p>
+    </section>
   </div>
 
-  <footer>Stima semplificata · dipendente tempo indeterminato · residenza fiscale Milano (MI) · nessuna agevolazione o familiare a carico · anno d'imposta 2026</footer>
+  <!-- ===================== METODO ===================== -->
+  <section class="card">
+    <h2>Metodo, semplificazioni e fonti</h2>
+
+    <details>
+      <summary>Il caso modellato e le semplificazioni fatte</summary>
+      <div>
+        <ul class="elenco">
+          <li><strong>Chi.</strong> Impiegato del settore privato, contratto a tempo indeterminato,
+              365 giorni di lavoro nell'anno, nessun altro reddito, nessun familiare a carico,
+              nessun onere detraibile, nessun regime agevolato (impatriati, ZES, ricercatori).</li>
+          <li><strong>Dove.</strong> Residenza fiscale a Milano, quindi addizionale regionale
+              Lombardia e addizionale comunale di Milano.</li>
+          <li><strong>Contributi.</strong> Aliquota IVS del 9,19%, tipica del regime FPLD ordinario.
+              Settori con aliquote diverse (agricoltura, spettacolo, apprendistato) non sono modellati.
+              Il massimale contributivo &egrave; applicato sempre, il che equivale ad assumere una
+              prima iscrizione previdenziale successiva al 31/12/1995: cambia qualcosa solo oltre
+              122.295 &euro; di RAL.</li>
+          <li><strong>Arrotondamenti.</strong> Il calcolo lavora a precisione piena e arrotonda solo
+              a video. Un cedolino reale arrotonda all'euro le singole imposte: lo scostamento
+              atteso &egrave; di pochi euro l'anno.</li>
+          <li><strong>Addizionali.</strong> Sono competenza dell'anno in corso ma vengono trattenute
+              a rate nell'anno successivo. Qui sono imputate all'anno di competenza: &egrave; la
+              rappresentazione corretta del costo annuo, non del flusso di cassa mese per mese.</li>
+          <li><strong>Fuori perimetro.</strong> TFR (retribuzione differita, non entra nel netto in
+              busta), welfare aziendale, buoni pasto, premi di risultato detassati, straordinari,
+              part-time, assegno unico, conguagli di fine anno e arretrati.</li>
+          <li><strong>Netto mensile.</strong> &Egrave; una media dei mesi ordinari: un cedolino
+              reale varia leggermente per giorni lavorati, conguagli e ratei.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Perch&eacute; il netto non cresce sempre con la RAL</summary>
+      <div>
+        <p style="margin-top:0;color:var(--text-2);font-size:14px">
+          Quattro benefici sono costruiti <em>a gradino</em> e non a scaglione: superata la soglia
+          di un solo euro, il beneficio decade per intero. In quattro punti della curva, quindi,
+          una RAL pi&ugrave; alta produce un netto pi&ugrave; basso. Il calcolatore le riconosce
+          e le segnala.
+        </p>
+        <ul class="elenco" id="elenco-soglie"></ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Fonti normative</summary>
+      <div>
+        <ul class="elenco">
+          <li><strong>Aliquote e scaglioni IRPEF 2026</strong> &mdash; art. 11 TUIR come modificato
+              dalla Legge di Bilancio 2026 (L. 199/2025): il secondo scaglione scende dal 35% al 33%.</li>
+          <li><strong>Detrazione per redditi da lavoro dipendente</strong> &mdash; art. 13 co. 1 e 1.1
+              TUIR, importi vigenti dal 2025 (L. 207/2024).</li>
+          <li><strong>Taglio del cuneo fiscale</strong> &mdash; L. 207/2024 art. 1 co. 4-9;
+              Agenzia delle Entrate, circolare 4/E del 2025.</li>
+          <li><strong>Trattamento integrativo</strong> &mdash; D.L. 3/2020 conv. L. 21/2020 art. 1,
+              come modificato dal D.Lgs. 216/2023 e dalla L. 207/2024.</li>
+          <li><strong>Contributi, massimale e aliquota aggiuntiva 1%</strong> &mdash; INPS,
+              circolare n. 6 del 30/01/2026 (minimali e massimali 2026); L. 335/1995 art. 3-ter.</li>
+          <li><strong>Addizionale regionale Lombardia</strong> &mdash; art. 72 co. 1 l.r. 10/2003;
+              tabella MEF &ndash; Dipartimento delle Finanze, aliquote pubblicate il 28/01/2026.</li>
+          <li><strong>Addizionale comunale Milano</strong> &mdash; aliquota 0,80% con soglia di
+              esenzione a 23.000 &euro; di reddito imponibile.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Com'&egrave; fatto e come si verifica</summary>
+      <div>
+        <ul class="elenco">
+          <li>HTML, CSS e JavaScript senza dipendenze e senza build step: si apre
+              <code>index.html</code> e funziona, anche offline.</li>
+          <li><code>src/tax-rules-2026.js</code> contiene <em>solo</em> aliquote e soglie, ciascuna
+              con la fonte a fianco: &egrave; il punto unico da aggiornare quando cambia la norma.</li>
+          <li><code>src/calcolo.js</code> contiene funzioni pure, una per istituto giuridico.
+              Ognuna restituisce il valore <em>e</em> la formula applicata: &egrave; quella stringa
+              che leggi premendo &laquo;Mostra le formule&raquo;, non un testo scritto a mano.</li>
+          <li>31 verifiche automatiche fissano soglie di legge, continuit&agrave; degli scaglioni e
+              identit&agrave; contabili &mdash; <a href="test.html">eseguile nel browser</a> oppure
+              con <code>node test/calcolo.test.js</code>.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <p class="pie">
+    Stima a scopo dimostrativo, non sostituisce un cedolino elaborato da un consulente del lavoro.<br>
+    Anno d'imposta 2026 &middot; <a href="test.html">verifiche automatiche</a>
+  </p>
 </div>
 
-<script src="script.js"></script>
+<!-- Puramente visivo: l'accessibilita del grafico passa dagli aria-label
+     dei segmenti, non da una live region che li ripeterebbe. -->
+<div id="tooltip" aria-hidden="true"></div>
+
+<script src="src/tax-rules-2026.js"></script>
+<script src="src/calcolo.js"></script>
+<script src="src/ui.js"></script>
 </body>
 </html>
